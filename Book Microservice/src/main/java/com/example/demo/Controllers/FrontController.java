@@ -43,6 +43,12 @@ public class FrontController {
         return ResponseEntity.ok(books);
     }
 
+    @GetMapping("/user/books")
+    public ResponseEntity<List<Books>> getAllBooksByUser() {
+        List<Books> books = booksRepo.findAll();
+        return ResponseEntity.ok(books);
+    }
+
     @PutMapping("/updateBook/{id}")
     public ResponseEntity<?> updateBook(@PathVariable Long id,
                                         @RequestBody Books books) {

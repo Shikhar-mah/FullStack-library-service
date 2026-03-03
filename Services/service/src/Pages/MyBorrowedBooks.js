@@ -35,11 +35,10 @@ function MyBorrowedBooks() {
     apiUsers
         .delete(`/borrows/${borrowId}`)
         .then(() => {
-          // remove locally (no refetch needed)
           setBorrowedBooks(prev =>
               prev.filter(b => b.borrowerId !== borrowId)
           );
-          toast.success("Book deleted successfully.");
+          toast.success("Book returned successfully.");
           setDeleteLoading(null);
         })
         .catch(() => {
@@ -57,9 +56,9 @@ function MyBorrowedBooks() {
 
     const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
 
-    if (daysLeft < 0) return { text: "Overdue", color: "#dc3545" };
-    if (daysLeft <= 3) return { text: "Due Soon", color: "#fd7e14" };
-    return { text: "Active", color: "#28a745" };
+    if (daysLeft < 0) return { text: "Overdue", color: "#dc3545", class: "status-overdue" };
+    if (daysLeft <= 3) return { text: "Due Soon", color: "#fd7e14", class: "status-due-soon" };
+    return { text: "Active", color: "#28a745", class: "status-active" };
   };
 
   if (loading) {
@@ -98,58 +97,66 @@ function MyBorrowedBooks() {
           <p style={styles.subtitle}>{borrowedBooks.length} active borrowings</p>
         </div>
 
-        <div style={styles.grid}>
-          {borrowedBooks.map((book) => {
-            const borrowId = book.borrowerId; // IMPORTANT: must exist in API
-            const dueStatus = getDueDateStatus(book.returnDate);
-            const isDeleting = deleteLoading === borrowId;
+        <div style={styles.tableWrapper}>
+          <table style={styles.table}>
+            <thead style={styles.tableHead}>
+            <tr>
+              <th style={styles.tableHeader}>Book Name</th>
+              <th style={styles.tableHeader}>Member ID</th>
+              <th style={styles.tableHeader}>Borrow Date</th>
+              <th style={styles.tableHeader}>Due Date</th>
+              <th style={styles.tableHeader}>Status</th>
+              <th style={styles.tableHeader}>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            {borrowedBooks.map((book) => {
+              const borrowId = book.borrowerId;
+              const dueStatus = getDueDateStatus(book.returnDate);
+              const isDeleting = deleteLoading === borrowId;
 
-            return (
-                <div key={borrowId} style={styles.card}>
-                  <div style={styles.cardHeader}>
-                <span style={styles.bookId}>
-                  Book name : {book.bookName || book.title || "Unknown"}
-                </span>
-
-                    <div style={styles.headerActions}>
-                  <span style={{...styles.status, backgroundColor: dueStatus.color}}>
-                    {dueStatus.text}
-                  </span>
-
+              return (
+                  <tr key={borrowId} style={styles.tableRow}>
+                    <td style={styles.tableCell}>
+                        <span style={styles.bookName}>
+                          {book.bookName || book.title || "Unknown"}
+                        </span>
+                    </td>
+                    <td style={styles.tableCell}>
+                      <span style={styles.memberId}>{book.memberId}</span>
+                    </td>
+                    <td style={styles.tableCell}>
+                      {new Date(book.borrowDate).toLocaleDateString()}
+                    </td>
+                    <td style={styles.tableCell}>
+                        <span style={{ color: dueStatus.color, fontWeight: 500 }}>
+                          {new Date(book.returnDate).toLocaleDateString()}
+                        </span>
+                    </td>
+                    <td style={styles.tableCell}>
+                        <span style={{...styles.statusBadge, backgroundColor: dueStatus.color}}>
+                          {dueStatus.text}
+                        </span>
+                    </td>
+                    <td style={styles.tableCell}>
                       <button
                           onClick={() => handleDelete(borrowId)}
                           disabled={isDeleting}
-                          style={styles.deleteButton}
+                          style={styles.returnButton}
                           title="Return Book"
                       >
-                        {isDeleting ? <span style={styles.deleteSpinner}></span> : "×"}
+                        {isDeleting ? (
+                            <span style={styles.buttonSpinner}></span>
+                        ) : (
+                            "Return Book"
+                        )}
                       </button>
-                    </div>
-                  </div>
-
-                  <div style={styles.memberInfo}>
-                    <span style={styles.memberLabel}>Member ID</span>
-                    <span style={styles.memberId}>{book.memberId}</span>
-                  </div>
-
-                  <div style={styles.dateInfo}>
-                    <div style={styles.dateRow}>
-                      <span style={styles.dateLabel}>Borrowed</span>
-                      <span style={styles.dateValue}>
-                    {new Date(book.borrowDate).toLocaleDateString()}
-                  </span>
-                    </div>
-
-                    <div style={styles.dateRow}>
-                      <span style={styles.dateLabel}>Due Date</span>
-                      <span style={{...styles.dateValue, color: dueStatus.color}}>
-                    {new Date(book.returnDate).toLocaleDateString()}
-                  </span>
-                    </div>
-                  </div>
-                </div>
-            );
-          })}
+                    </td>
+                  </tr>
+              );
+            })}
+            </tbody>
+          </table>
         </div>
       </div>
   );
@@ -159,7 +166,7 @@ export default MyBorrowedBooks;
 
 const styles = {
   container: {
-    maxWidth: "1200px",
+    maxWidth: "1400px",
     margin: "0 auto",
     padding: "2rem",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -168,19 +175,27 @@ const styles = {
   },
   header: {
     marginBottom: "2rem",
-    padding: "0 0.5rem"
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "1rem"
   },
   title: {
     fontSize: "2rem",
     fontWeight: "600",
     color: "#1a1a1a",
-    margin: "0 0 0.5rem 0",
+    margin: "0",
     letterSpacing: "-0.02em"
   },
   subtitle: {
     fontSize: "1rem",
     color: "#6c757d",
-    margin: 0
+    margin: 0,
+    padding: "0.5rem 1rem",
+    backgroundColor: "white",
+    borderRadius: "20px",
+    border: "1px solid #e9ecef"
   },
   centerContainer: {
     display: "flex",
@@ -190,117 +205,72 @@ const styles = {
     minHeight: "60vh",
     textAlign: "center"
   },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-    gap: "1.5rem"
-  },
-  card: {
+  tableWrapper: {
     backgroundColor: "white",
     borderRadius: "12px",
-    padding: "1.5rem",
     boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-    transition: "all 0.2s ease",
     border: "1px solid #e9ecef",
-    position: "relative"
+    overflow: "hidden"
   },
-  cardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "1.5rem"
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    textAlign: "left",
+    fontSize: "0.95rem"
   },
-  headerActions: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.75rem"
+  tableHead: {
+    backgroundColor: "#f8f9fa",
+    borderBottom: "2px solid #e9ecef"
   },
-  bookId: {
-    fontSize: "0.9rem",
-    color: "#6c757d",
-    fontWeight: "500"
-  },
-  status: {
-    fontSize: "0.75rem",
+  tableHeader: {
+    padding: "1rem 1.5rem",
     fontWeight: "600",
+    color: "#495057",
+    textTransform: "uppercase",
+    fontSize: "0.85rem",
+    letterSpacing: "0.02em"
+  },
+  tableRow: {
+    borderBottom: "1px solid #e9ecef",
+    transition: "background-color 0.2s ease",
+    cursor: "pointer"
+  },
+  tableCell: {
+    padding: "1rem 1.5rem",
+    color: "#1a1a1a"
+  },
+  bookName: {
+    fontWeight: "500",
+    color: "#1a1a1a"
+  },
+  memberId: {
+    fontFamily: "monospace",
+    backgroundColor: "#f8f9fa",
+    padding: "0.25rem 0.5rem",
+    borderRadius: "4px",
+    fontSize: "0.9rem"
+  },
+  statusBadge: {
+    display: "inline-block",
     padding: "0.25rem 0.75rem",
     borderRadius: "20px",
     color: "white",
-    textTransform: "uppercase",
-    letterSpacing: "0.02em"
+    fontSize: "0.85rem",
+    fontWeight: "500",
+    textAlign: "center",
+    minWidth: "80px"
   },
-  deleteButton: {
-    width: "28px",
-    height: "28px",
-    borderRadius: "50%",
+  returnButton: {
+    padding: "0.5rem 1rem",
     backgroundColor: "#dc3545",
     color: "white",
     border: "none",
-    fontSize: "1.5rem",
-    lineHeight: "1",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 0,
-    transition: "all 0.2s ease",
-    boxShadow: "0 2px 4px rgba(220, 53, 69, 0.2)"
-  },
-  memberInfo: {
-    backgroundColor: "#f8f9fa",
-    padding: "1rem",
-    borderRadius: "8px",
-    marginBottom: "1.25rem"
-  },
-  memberLabel: {
-    display: "block",
-    fontSize: "0.75rem",
-    color: "#6c757d",
-    marginBottom: "0.25rem",
-    textTransform: "uppercase",
-    letterSpacing: "0.02em"
-  },
-  memberId: {
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    color: "#1a1a1a"
-  },
-  dateInfo: {
-    marginBottom: "1.5rem"
-  },
-  dateRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "0.5rem 0",
-    borderBottom: "1px solid #e9ecef"
-  },
-  dateLabel: {
-    fontSize: "0.9rem",
-    color: "#6c757d"
-  },
-  dateValue: {
-    fontSize: "0.95rem",
-    color: "#1a1a1a"
-  },
-  cardFooter: {
-    marginTop: "auto"
-  },
-  viewButton: {
-    display: "inline-block",
-    width: "100%",
-    padding: "0.75rem 1rem",
-    backgroundColor: "#f8f9fa",
-    color: "#1a1a1a",
-    textDecoration: "none",
-    borderRadius: "8px",
-    fontSize: "0.95rem",
+    borderRadius: "6px",
+    fontSize: "0.85rem",
     fontWeight: "500",
-    textAlign: "center",
-    border: "1px solid #e9ecef",
-    transition: "all 0.2s ease",
     cursor: "pointer",
-    boxSizing: "border-box"
+    transition: "all 0.2s ease",
+    minWidth: "100px"
   },
   spinner: {
     width: "40px",
@@ -311,7 +281,7 @@ const styles = {
     animation: "spin 1s linear infinite",
     marginBottom: "1rem"
   },
-  deleteSpinner: {
+  buttonSpinner: {
     display: "inline-block",
     width: "16px",
     height: "16px",
@@ -353,38 +323,46 @@ const styles = {
   }
 };
 
-// Add this to your global CSS or style tag
+// Add this to your global CSS or as a style tag
 const globalStyles = `
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
-  
-  .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
-    border-color: #1a1a1a;
+
+  tbody tr:hover {
+    background-color: #f8f9fa;
   }
-  
-  .view-button:hover {
-    background-color: #1a1a1a;
-    color: white;
-    border-color: #1a1a1a;
+
+  tbody tr:last-child {
+    border-bottom: none;
   }
-  
-  .delete-button:hover {
+
+  .return-button:hover {
     background-color: #c82333;
-    transform: scale(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
   }
-  
-  .delete-button:disabled {
+
+  .return-button:disabled {
     opacity: 0.7;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
   }
-  
+
   .browse-button:hover,
   .retry-button:hover {
     background-color: #333;
+  }
+
+  @media (max-width: 768px) {
+    .table-wrapper {
+      overflow-x: auto;
+    }
+    
+    table {
+      min-width: 800px;
+    }
   }
 `;

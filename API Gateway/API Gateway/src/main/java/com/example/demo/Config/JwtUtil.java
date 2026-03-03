@@ -1,6 +1,7 @@
 package com.example.demo.Config;
 
 
+import com.example.demo.Repo.AdminRepo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -14,6 +15,10 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
+    private final AdminRepo adminRepo;
+    public JwtUtil(AdminRepo adminRepo) {
+        this.adminRepo = adminRepo;
+    }
     private final String SECRET = "K9fT2mX8qLrV4zYp1cWd7sBn3hGj6QeU0tRa5kLmN2c="; // 32+ chars
 
     private Key getSignKey() {
@@ -25,6 +30,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
+                .claim("role", adminRepo.findById(username).get().getRole() )
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hour
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
@@ -45,11 +51,15 @@ public class JwtUtil {
         }
     }
 
-    private Claims extractAllClaims(String token) {
+    public Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSignKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
+    }
+
 }

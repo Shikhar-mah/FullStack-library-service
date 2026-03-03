@@ -11,8 +11,9 @@ function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
-    // Register form state
+    // Register form state - Added email field
     const [registerName, setRegisterName] = useState("");
+    const [registerEmail, setRegisterEmail] = useState(""); // New email field
     const [registerUsername, setRegisterUsername] = useState("");
     const [registerPassword, setRegisterPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -63,13 +64,13 @@ function Login() {
     };
 
     const handleRegister = async () => {
-        // Validation
-        if (!registerName.trim() || !registerUsername.trim() || !registerPassword.trim() || !confirmPassword.trim()) {
+        // Validation - Added email validation
+        if (!registerName.trim() || !registerEmail.trim() || !registerUsername.trim() || !registerPassword.trim() || !confirmPassword.trim()) {
             setError("Please fill in all fields");
             return;
         }
 
-        if (!validateEmail(registerUsername)) {
+        if (!validateEmail(registerEmail)) {
             setError("Please enter a valid email address");
             return;
         }
@@ -90,14 +91,16 @@ function Login() {
         try {
             const response = await apiAuth.post("/register", {
                 name: registerName,
+                email: registerEmail, // Added email field
                 username: registerUsername,
                 password: registerPassword,
             });
 
             setSuccess("Registration successful! Please login.");
 
-            // Clear registration form
+            // Clear registration form - Added email to cleared fields
             setRegisterName("");
+            setRegisterEmail("");
             setRegisterUsername("");
             setRegisterPassword("");
             setConfirmPassword("");
@@ -136,10 +139,11 @@ function Login() {
         setError("");
         setSuccess("");
 
-        // Clear forms
+        // Clear forms - Added email to cleared fields
         setUsername("");
         setPassword("");
         setRegisterName("");
+        setRegisterEmail("");
         setRegisterUsername("");
         setRegisterPassword("");
         setConfirmPassword("");
@@ -188,7 +192,7 @@ function Login() {
                                 setError("");
                             }}
                             onKeyDown={handleKeyPress}
-                            placeholder="Email"
+                            placeholder="Username"
                             value={username}
                             disabled={isLoading}
                             className="auth-input"
@@ -217,7 +221,7 @@ function Login() {
                         </button>
                     </div>
                 ) : (
-                    // Register Form
+                    // Register Form - Added email field
                     <div className="form-container fade-in">
                         <input
                             onChange={(e) => {
@@ -232,14 +236,27 @@ function Login() {
                             autoFocus
                         />
 
+                        {/* New Email Field */}
+                        <input
+                            onChange={(e) => {
+                                setRegisterEmail(e.target.value);
+                                setError("");
+                            }}
+                            onKeyDown={handleKeyPress}
+                            placeholder="Email"
+                            type="email"
+                            value={registerEmail}
+                            disabled={isLoading}
+                            className="auth-input"
+                        />
+
                         <input
                             onChange={(e) => {
                                 setRegisterUsername(e.target.value);
                                 setError("");
                             }}
                             onKeyDown={handleKeyPress}
-                            placeholder="Email"
-                            type="email"
+                            placeholder="Username"
                             value={registerUsername}
                             disabled={isLoading}
                             className="auth-input"

@@ -1,6 +1,9 @@
 import { NavLink } from "react-router-dom";
+import {getUserFromToken} from "../api";
 
 function Sidebar() {
+    const user = getUserFromToken();
+    const role = user?.role;
     return (
         <div style={styles.sidebar}>
             <h2 style={styles.logo}>📚 Library App</h2>
@@ -26,6 +29,13 @@ function Sidebar() {
                 >
                     📦 Borrowed Books
                 </NavLink>
+                {/* Only show to ADMIN */}
+                {role === "ADMIN" && (
+                    <NavLink to="/users" style={({ isActive }) => (isActive ? styles.activeLink : styles.link)}>
+                    👤 All Users
+                    </NavLink>
+                    )}
+
             </nav>
         </div>
     );
